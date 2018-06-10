@@ -5,9 +5,6 @@
 using namespace std;
 
 	std::mt19937_64 generator (int(time(0)));
-	std::uniform_real_distribution<double> dis(1.0, 7.0);
-	std::uniform_real_distribution<double> reroll(1.0, 11.0);
-	std::uniform_real_distribution<double> gemSelect(1.0, 6.0);
 	
 	int weightedDice(int* dist)
 	{
@@ -37,8 +34,8 @@ using namespace std;
 	
 	int gameOutcome(int bet)
 	{
-		int result = (int) dis(generator);
-		return result;
+		//int result = (int) dis(generator);
+		return -1;
 	}
 	
 
@@ -115,77 +112,99 @@ int burndownrunner()
 
 int main()
 {
+	const int numTrials = 10000000;
 
-	double total=0;
-	double idolHits = 0;
-	int roll = 0;
-	int prize = 0;
-	int rerolls = 0;
-	int checkReroll = 0;
-	int numTrials = 10000000;
-	int numGems = 0;
 	
-	int prizeTable[7] = 
+	
+	int diceRollRNGResult = 0;				// used to store the result from the RNG for the dice roll
+	int rerollCheckRNGResult = -1;          // used to store the result from the RNG for checking rerolls
+	int diceSelectRNGResult = -1; 			// used to store the result from the RNG for selecting the dice to use in a position
+	
+	double numGems = 0; 				// the number of gems collected in the trial
+	double numIdols = 0;			// the number of ideols collected in the trial
+	double totalPrize=0;
+
+	int numRerolls = 0;
+	
+	
+	int prizeTable[6] = 
 	{
-		0,  //buffer
 		0,
 		0,
-		50,
-		100,
-		200,
-		500
+		5,
+		10,
+		20,
+		50
 	};
 	
-	int diceTest[8] = {6,6,1,1,1,1,1,1};
-	int reRoll[2][4] = {
+	const int IDOLRESULT = 0;
+	const int RESPINRESULT = 1;
+	
+	
+	int diceWeights[2][8] = {
+						{6,6,1,1,1,1,1,1},
+						{6,6,1,1,1,1,1,1},
+						};
+	
+	int reRollWeights[2][4] = {
 		                {2,10,1,9},
 		                {2,10,9,1}
 						};
+						
+	int gemWeights[2][7] = {
+							{5,5,1,1,1,1,1},
+							{5,5,1,1,1,1,1},
+						};		
+	int gemValue[5] = {1,2,3,4,5};
+	
 	int whichDice[4] = {2,2,1,1};
-	int diceSelect = -1;
+	
+
 	
 	for (int i=0; i<numTrials; i++) {
-		numGems = 0;
+		//numGems = 0;
+		numIdols = 0;
+		
 		for (int j=0; j<15; j++)
 		{
-			diceSelect = weightedDice(whichDice);
-			rerolls = 10;
-			checkReroll = 0;
+			diceSelectRNGResult = weightedDice(whichDice);
+			numRerolls = 100;
+			rerollCheckRNGResult = 0;
 			
-			roll =  weightedDice(diceTest)+1;
+			diceRollRNGResult =  weightedDice(diceWeights[diceSelectRNGResult]);
 			//printf("Roll %i", roll);
 		
 			
-			if (roll == 2) {
-				checkReroll = weightedDice(reRoll[diceSelect]);
+			if (diceRollRNGResult == RESPINRESULT) {
+				rerollCheckRNGResult = weightedDice(reRollWeights[diceSelectRNGResult]);
 				//printf("...ReRoll check %i", checkReroll);
 				//checkReroll = 0;
 				
 			}
 			
-				while (checkReroll == 0 && roll == 2 && rerolls >0)
+				while (rerollCheckRNGResult == 0 && diceRollRNGResult == RESPINRESULT && numRerolls >0)
 				{
-					rerolls--;
-					roll =  weightedDice(diceTest)+1;
+					numRerolls--;
+					diceRollRNGResult =  weightedDice(diceWeights[diceSelectRNGResult]);
 					//printf("...Roll %i", roll);	
-					if (roll == 2)
+					if (diceRollRNGResult == RESPINRESULT)
 					{					
-						checkReroll =  weightedDice(reRoll[diceSelect]);
+						rerollCheckRNGResult =  weightedDice(reRollWeights[diceSelectRNGResult]);
 						//printf("...ReRoll check %i", checkReroll);
 					}
 				}
 			
-			total+= prizeTable[roll];
-			if (roll == 1){
-				numGems += gemSelect(generator);
+			totalPrize+= prizeTable[diceRollRNGResult];
+			if (diceRollRNGResult == IDOLRESULT){
+				numGems += gemValue[weightedDice(gemWeights[diceSelectRNGResult])] ;
 				//printf("Gems: %i\n", numGems);
 				
 			}
 		}
-		idolHits+= numGems;
+		
 				
 	}
-	 printf("%f\n", total/numTrials);
-	 printf("%f\n", idolHits/numTrials);
+	 printf("Prizes: %f\n", totalPrize/numTrials);
+	 printf("Gems %f\n", numGems/numTrials);
 		
 }
