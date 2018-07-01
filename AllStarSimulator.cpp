@@ -132,20 +132,20 @@ int burndownrunner()
 
 int main()
 {
-	 clock_t tStart = clock();
+	clock_t tStart = clock();
 	 
-	const int numTrials = 1000000;
+	const int numTrials = 100000000;
 
 	
 	
-	
-	int diceRollRNGResult = 0;				// used to store the result from the RNG for the dice roll
+	int diceRollRNGResult = -1;				// used to store the result from the RNG for the dice roll
 	int rerollCheckRNGResult = -1;          // used to store the result from the RNG for checking rerolls
 	int diceSelectRNGResult = -1; 			// used to store the result from the RNG for selecting the dice to use in a position
+	int numGemsSelectRNGResult = -1;
+
+	int numGems = 0; 				// the number of gems collected in the trial
 	
-	double numGems = 0; 				// the number of gems collected in the trial
-	
-	double numIdols = 0;			// the number of ideols collected in the trial
+	int numIdols = 0;			// the number of idols collected in the trial
 	double totalPrize=0;
 
 	int numRerolls = 0;
@@ -155,65 +155,109 @@ int main()
 	{
 		0,
 		0,
+		1,
+		2,
 		5,
-		10,
-		20,
-		50
+		10
 	};
 	
 	const int IDOLRESULT = 0;
 	const int RESPINRESULT = 1;
 	
+	int stats[15] = {0};
 	
 	int diceWeights[3][8] = {
-						{6,6,2,3,1,0,0,0},
-						{6,6,1,1,1,1,1,1},
-						{6,6,1,1,1,1,1,1}
+						{6,6,3,2,1,0,0,0},
+						{6,6,2,1,1,1,1,0},
+						{6,6,2,1,1,1,1,0}
 						};
 	
 	int reRollWeights[3][4] = {
-		                {2,10,1,9},
+		                {2,10,4,6},
 		                {2,10,9,1},
 						{2,10,5,5}
 						
 						};
 						
-	int gemWeights[3][7] = {
-							{5,7,1,2,2,1,1},
-							{5,5,1,1,1,1,1},
-							{5,7,1,1,2,2,1},
-							
-						};		
-	int gemValue[5] = {1,2,3,4,5};
+	//Weights that detremine how many Gems are awarded	
+	int gemAwardWeights[16][32] =	
+	{	
+{30,1000000,1000000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{30,1000000,200000,200000,200000,200000,200000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{30,1000000,0,110000,110000,110000,110000,110000,110000,110000,110000,120000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{30,1000000,0,0,125000,130000,125000,125000,125000,125000,125000,20000,20000,20000,20000,20000,20000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{30,1000000,0,0,0,149996,149996,149996,149996,149996,150000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,20,0,0,0,0,0,0,0,0,0,0},
+{30,1000000,0,0,0,0,200000,200000,200000,200000,149898,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,20,20,20,20,20,2,0,0,0,0,0},
+{30,1000000,0,0,0,0,0,212000,212000,212000,213800,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,20,20,20,20,20,20,20,20,20,19,1},
+{30,1000000,0,0,0,0,0,0,213900,213000,213000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,2000,2000,2000,2000,2000,20,20,20,20,18,2},
+{30,1000000,0,0,0,0,0,0,0,154495,154495,64000,64000,64000,64000,64000,64000,64000,64000,64000,64000,10000,10000,10000,10000,10000,200,200,200,200,200,10},
+{30,1000000,0,0,0,0,0,0,0,0,4990,84000,84000,84000,84000,84000,84000,84000,84000,84000,84000,30000,30000,30000,30000,30000,1000,1000,1000,1000,1000,10},
+{30,1000000,0,0,0,0,0,0,0,0,0,79000,79000,79000,79000,79000,79000,79000,79000,79000,78900,40000,40000,40000,40000,40000,2000,2000,2000,2000,2000,100},
+{30,1000000,0,0,0,0,0,0,0,0,0,0,72500,72500,72900,72000,72000,72000,72000,72000,72000,60000,60000,60000,60000,60000,10000,10000,10000,10000,10000,100},
+{30,1000000,0,0,0,0,0,0,0,0,0,0,0,57000,56900,56000,56000,56000,56000,56000,56000,80000,80000,80000,80000,80000,30000,30000,30000,30000,30000,100},
+{30,1000000,0,0,0,0,0,0,0,0,0,0,0,0,33000,33000,33000,33000,33000,33000,32000,70000,70000,70000,70000,70000,80000,80000,80000,80000,80000,20000},
+{30,1000000,0,0,0,0,0,0,0,0,0,0,0,0,0,40000,45000,45000,45000,45000,40000,16000,16000,16000,16000,16000,100000,100000,100000,100000,100000,160000},
+{30,1000000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000000},
+	};	
+		
+	//Weights to detremine the dice	
+	int diceSelectionWeights[15][5] =	
+	{	
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+{3,3,1,1,1},
+
+
+
+	};	
+
 	
-	int whichDice[5] = {3,3,1,1,1};
-	
-	int jackpotCollectionTiers[4] = {10,20,25,35};
-	int jackpotAmounts[4] = {20,150,1000,18000};
+	int jackpotCollectionTiers[4] = {10,20,25,30};
+	int jackpotAmounts[4] = {20,100,1000,18000};
 	
 	for (int i=0; i<numTrials; i++) {
+		//Print the status
 		if (i%(numTrials/100) ==0) printf("%f\n", (double)i/numTrials);
+
+		//Reset the collection each trial
 		numGems = 0;
 		numIdols = 0;
 		
-		for (int j=0; j<15; j++)
+		//For each position
+		for (int reelPos=0; reelPos<15; reelPos++)
 		{
-			diceSelectRNGResult = weightedDice(whichDice);
-			numRerolls = 100;
-			rerollCheckRNGResult = 0;
 			
+			rerollCheckRNGResult = -1;
+			
+			//Select which dice to use
+			diceSelectRNGResult = weightedDice(diceSelectionWeights[reelPos]);
+		//	diceSelectRNGResult = 0;
+
+			//Roll the dice
 			diceRollRNGResult =  weightedDice(diceWeights[diceSelectRNGResult]);
 			//printf("Roll %i", roll);
-		
 			
+			//Check for a reroll
 			if (diceRollRNGResult == RESPINRESULT) {
+				//Each dice has a different reroll weight, check agianst that
 				rerollCheckRNGResult = weightedDice(reRollWeights[diceSelectRNGResult]);
 				//printf("...ReRoll check %i", checkReroll);
-				//checkReroll = 0;
-				
+				//rerollCheckRNGResult = 0;
 			}
 			
-				while (rerollCheckRNGResult == 0 && diceRollRNGResult == RESPINRESULT && numRerolls >0)
+				while (rerollCheckRNGResult == 0 && diceRollRNGResult == RESPINRESULT )
 				{
 					numRerolls--;
 					diceRollRNGResult =  weightedDice(diceWeights[diceSelectRNGResult]);
@@ -223,28 +267,36 @@ int main()
 						rerollCheckRNGResult =  weightedDice(reRollWeights[diceSelectRNGResult]);
 						//printf("...ReRoll check %i", checkReroll);
 					}
+					//rerollCheckRNGResult = 0;
 				}
 			
 			totalPrize+= prizeTable[diceRollRNGResult];
 			if (diceRollRNGResult == IDOLRESULT){
-				numGems += gemValue[weightedDice(gemWeights[diceSelectRNGResult])] ;
+				numIdols++;
 				//printf("Gems: %i\n", numGems);
-				
 			}
 		}
+
+		//stats[numIdols]++;
 		
+
+		numGems = weightedDice(gemAwardWeights[numIdols]) + 1;
+		//if (numGems >= jackpotCollectionTiers[3]) printf("[%i]>(%i)\n", numGems,jackpotCollectionTiers[3]);
+
 		
 		if (numGems >= jackpotCollectionTiers[3]) totalPrize+=jackpotAmounts[3];
 		else if (numGems >= jackpotCollectionTiers[2]) totalPrize+=jackpotAmounts[2];
 		else if (numGems >= jackpotCollectionTiers[1]) totalPrize+=jackpotAmounts[1];
 		else if (numGems >= jackpotCollectionTiers[0]) totalPrize+=jackpotAmounts[0];
-		
+	
+		if (numGems >= jackpotCollectionTiers[3]) stats[0]++;
 		
 				
 	}
 	 printf("Prizes: %f\n", totalPrize/numTrials);
-	 printf("Gems %f\n", numGems/numTrials);
 	 
+	 for (int i=0; i<=15; i++) printf("%i : %f\n", i, (double)stats[i]/(double)numTrials);
+
 	 	 time_t end = time(0); 
 		printf("Time taken: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 		
