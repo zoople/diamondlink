@@ -157,8 +157,8 @@ int main()
 		0,
 		1,
 		2,
-		5,
-		10
+		3,
+		0
 	};
 	
 	const int IDOLRESULT = 0;
@@ -167,17 +167,16 @@ int main()
 	int stats[15] = {0};
 	
 	int diceWeights[3][8] = {
-						{6,6,3,2,1,0,0,0},
-						{6,6,2,1,1,1,1,0},
-						{6,6,2,1,1,1,1,0}
+{6,6,2,2,1,1,0,0},
+{6,6,2,1,2,1,0,0},
+{6,6,2,1,1,1,1,0},
+
+
+
+
 						};
 	
-	int reRollWeights[3][4] = {
-		                {2,10,4,6},
-		                {2,10,9,1},
-						{2,10,5,5}
-						
-						};
+
 						
 	//Weights that detremine how many Gems are awarded	
 	int gemAwardWeights[16][32] =	
@@ -203,21 +202,21 @@ int main()
 	//Weights to detremine the dice	
 	int diceSelectionWeights[15][5] =	
 	{	
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
-{3,3,1,1,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
+{3,7,2,4,1},
 
 
 
@@ -234,43 +233,38 @@ int main()
 		//Reset the collection each trial
 		numGems = 0;
 		numIdols = 0;
+		numRerolls = 0;
 		
 		//For each position
 		for (int reelPos=0; reelPos<15; reelPos++)
 		{
+			numRerolls = 0;
 			
 			rerollCheckRNGResult = -1;
 			
 			//Select which dice to use
 			diceSelectRNGResult = weightedDice(diceSelectionWeights[reelPos]);
-		//	diceSelectRNGResult = 0;
+			//diceSelectRNGResult = 1;
 
 			//Roll the dice
 			diceRollRNGResult =  weightedDice(diceWeights[diceSelectRNGResult]);
 			//printf("Roll %i", roll);
 			
-			//Check for a reroll
-			if (diceRollRNGResult == RESPINRESULT) {
-				//Each dice has a different reroll weight, check agianst that
-				rerollCheckRNGResult = weightedDice(reRollWeights[diceSelectRNGResult]);
-				//printf("...ReRoll check %i", checkReroll);
-				//rerollCheckRNGResult = 0;
-			}
 			
-				while (rerollCheckRNGResult == 0 && diceRollRNGResult == RESPINRESULT )
+				while (diceRollRNGResult == RESPINRESULT )
 				{
-					numRerolls--;
+					numRerolls++;
 					diceRollRNGResult =  weightedDice(diceWeights[diceSelectRNGResult]);
-					//printf("...Roll");	
-					if (diceRollRNGResult == RESPINRESULT)
-					{					
-						rerollCheckRNGResult =  weightedDice(reRollWeights[diceSelectRNGResult]);
-						//printf("...ReRoll check %i", checkReroll);
-					}
-					//rerollCheckRNGResult = 0;
 				}
+
+				if (numRerolls>19) numRerolls = 19;
 			
-			totalPrize+= prizeTable[diceRollRNGResult];
+			if (numRerolls >0) totalPrize+= prizeTable[diceRollRNGResult]*(numRerolls+1);
+			else totalPrize+= prizeTable[diceRollRNGResult];
+
+			
+	
+			
 			if (diceRollRNGResult == IDOLRESULT){
 				numIdols++;
 				//printf("Gems: %i\n", numGems);
@@ -282,7 +276,7 @@ int main()
 
 		numGems = weightedDice(gemAwardWeights[numIdols]) + 1;
 		//if (numGems >= jackpotCollectionTiers[3]) printf("[%i]>(%i)\n", numGems,jackpotCollectionTiers[3]);
-
+		//numGems = 0;
 		
 		if (numGems >= jackpotCollectionTiers[3]) totalPrize+=jackpotAmounts[3];
 		else if (numGems >= jackpotCollectionTiers[2]) totalPrize+=jackpotAmounts[2];
