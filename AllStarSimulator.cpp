@@ -134,7 +134,7 @@ int main()
 {
 	clock_t tStart = clock();
 	 
-	const int numTrials = 100000000;
+	const int numTrials = 10000000;
 
 	
 	
@@ -147,7 +147,8 @@ int main()
 	
 	int numIdols = 0;			// the number of idols collected in the trial
 	double totalPrize=0;
-
+	double jackpotPrize = 0;
+	
 	int numRerolls = 0;
 	
 	
@@ -166,10 +167,15 @@ int main()
 	
 	int stats[15] = {0};
 	
-	int diceWeights[3][8] = {
+	int diceWeights[5][8] = {
+{6,6,2,2,2,0,0,0},
 {6,6,2,2,1,1,0,0},
-{6,6,2,1,2,1,0,0},
-{6,6,2,1,1,1,1,0},
+{6,6,1,2,2,1,0,0},
+{6,6,1,1,2,1,1,0},
+{6,6,1,2,3,0,0,0},
+
+
+
 
 
 
@@ -196,27 +202,31 @@ int main()
 {30,1000000,0,0,0,0,0,0,0,0,0,0,0,57000,56900,56000,56000,56000,56000,56000,56000,80000,80000,80000,80000,80000,30000,30000,30000,30000,30000,100},
 {30,1000000,0,0,0,0,0,0,0,0,0,0,0,0,33000,33000,33000,33000,33000,33000,32000,70000,70000,70000,70000,70000,80000,80000,80000,80000,80000,20000},
 {30,1000000,0,0,0,0,0,0,0,0,0,0,0,0,0,40000,45000,45000,45000,45000,40000,16000,16000,16000,16000,16000,100000,100000,100000,100000,100000,160000},
+
 {30,1000000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000000},
 	};	
 		
 	//Weights to detremine the dice	
-	int diceSelectionWeights[15][5] =	
+	int diceSelectionWeights[15][7] =	
 	{	
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
-{3,7,2,4,1},
+{5,17,4,8,2,1,2},
+{5,18,4,8,2,1,3},
+{5,18,4,8,2,1,3},
+{5,19,4,9,2,1,3},
+{5,20,6,8,2,1,3},
+{5,18,6,8,1,1,2},
+{5,17,5,8,1,1,2},
+{5,16,5,7,1,1,2},
+{5,16,5,7,1,1,2},
+{5,16,5,7,1,1,2},
+{5,16,5,7,1,1,2},
+{5,16,5,7,1,1,2},
+{5,16,5,7,1,1,2},
+{5,15,4,7,1,1,2},
+{5,17,6,7,1,1,2},
+
+
+
 
 
 
@@ -225,6 +235,8 @@ int main()
 	
 	int jackpotCollectionTiers[4] = {10,20,25,30};
 	int jackpotAmounts[4] = {20,100,1000,18000};
+//	int jackpotAmounts[4] = {20,20,20,20};
+	
 	
 	for (int i=0; i<numTrials; i++) {
 		//Print the status
@@ -271,23 +283,24 @@ int main()
 			}
 		}
 
-		//stats[numIdols]++;
+		stats[numIdols]++;
 		
 
 		numGems = weightedDice(gemAwardWeights[numIdols]) + 1;
 		//if (numGems >= jackpotCollectionTiers[3]) printf("[%i]>(%i)\n", numGems,jackpotCollectionTiers[3]);
 		//numGems = 0;
 		
-		if (numGems >= jackpotCollectionTiers[3]) totalPrize+=jackpotAmounts[3];
-		else if (numGems >= jackpotCollectionTiers[2]) totalPrize+=jackpotAmounts[2];
-		else if (numGems >= jackpotCollectionTiers[1]) totalPrize+=jackpotAmounts[1];
-		else if (numGems >= jackpotCollectionTiers[0]) totalPrize+=jackpotAmounts[0];
+		if (numGems >= jackpotCollectionTiers[3]) 	   {jackpotPrize+=jackpotAmounts[3]; }//stats[3]++;}
+		else if (numGems >= jackpotCollectionTiers[2]) {jackpotPrize+=jackpotAmounts[2]; }//stats[2]++;}
+		else if (numGems >= jackpotCollectionTiers[1]) {jackpotPrize+=jackpotAmounts[1];}//stats[1]++;}
+		else if (numGems >= jackpotCollectionTiers[0]) {jackpotPrize+=jackpotAmounts[0];}//stats[0]++;}
 	
-		if (numGems >= jackpotCollectionTiers[3]) stats[0]++;
 		
 				
 	}
 	 printf("Prizes: %f\n", totalPrize/numTrials);
+	 printf("Jackpots: %f\n", jackpotPrize/numTrials);
+	 
 	 
 	 for (int i=0; i<=15; i++) printf("%i : %f\n", i, (double)stats[i]/(double)numTrials);
 
