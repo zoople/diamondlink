@@ -3,6 +3,8 @@
 #include <time.h>
 #include "randomc.h"
 #include "mersenne.cpp"
+ #include <thread>
+ #include "prizes.h"
 
 using namespace std;
 
@@ -102,7 +104,7 @@ int burndownrunner()
 	
 	double stats[1000]={0};
 	
-	int numTrials = 10001;
+	int numTrials = 1000;
 	int medianPos = numTrials/2.0 + 0.5;
 	printf("%i\n", medianPos);
 	int runningTotal =0;
@@ -130,122 +132,27 @@ int burndownrunner()
 	printf("MEDIAN: %i\n", median); 
 }
 
-int main()
-{
-	clock_t tStart = clock();
-	 
-	const int numTrials = 10000000;
 
-	
-	
+
+void diamondLinkFeature(double* stats)
+{
+
+	//dice results
 	int diceRollRNGResult = -1;				// used to store the result from the RNG for the dice roll
 	int rerollCheckRNGResult = -1;          // used to store the result from the RNG for checking rerolls
 	int diceSelectRNGResult = -1; 			// used to store the result from the RNG for selecting the dice to use in a position
 	int numGemsSelectRNGResult = -1;
 
-	int numGems = 0; 				// the number of gems collected in the trial
 	
-	int numIdols = 0;			// the number of idols collected in the trial
 	double totalPrize=0;
 	double jackpotPrize = 0;
 	
-	int numRerolls = 0;
 	
-	
-	int prizeTable[6] = 
-	{
-		0,
-		0,
-		1,
-		2,
-		3,
-		0
-	};
-	
-	const int IDOLRESULT = 0;
-	const int RESPINRESULT = 1;
-	
-	int stats[15] = {0};
-	
-	int diceWeights[5][8] = {
-{6,6,2,2,2,0,0,0},
-{6,6,2,2,1,1,0,0},
-{6,6,1,2,2,1,0,0},
-{6,6,1,1,2,1,1,0},
-{6,6,1,2,3,0,0,0},
-
-
-
-
-
-
-
-						};
-	
-
-						
-	//Weights that detremine how many Gems are awarded	
-	int gemAwardWeights[16][32] =	
-	{	
-{30,1000000,1000000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-{30,1000000,200000,200000,200000,200000,200000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-{30,1000000,0,110000,110000,110000,110000,110000,110000,110000,110000,120000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-{30,1000000,0,0,125000,130000,125000,125000,125000,125000,125000,20000,20000,20000,20000,20000,20000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-{30,1000000,0,0,0,149996,149996,149996,149996,149996,150000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,20,0,0,0,0,0,0,0,0,0,0},
-{30,1000000,0,0,0,0,200000,200000,200000,200000,149898,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,20,20,20,20,20,2,0,0,0,0,0},
-{30,1000000,0,0,0,0,0,212000,212000,212000,213800,15000,15000,15000,15000,15000,15000,15000,15000,15000,15000,20,20,20,20,20,20,20,20,20,19,1},
-{30,1000000,0,0,0,0,0,0,213900,213000,213000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,2000,2000,2000,2000,2000,20,20,20,20,18,2},
-{30,1000000,0,0,0,0,0,0,0,154495,154495,64000,64000,64000,64000,64000,64000,64000,64000,64000,64000,10000,10000,10000,10000,10000,200,200,200,200,200,10},
-{30,1000000,0,0,0,0,0,0,0,0,4990,84000,84000,84000,84000,84000,84000,84000,84000,84000,84000,30000,30000,30000,30000,30000,1000,1000,1000,1000,1000,10},
-{30,1000000,0,0,0,0,0,0,0,0,0,79000,79000,79000,79000,79000,79000,79000,79000,79000,78900,40000,40000,40000,40000,40000,2000,2000,2000,2000,2000,100},
-{30,1000000,0,0,0,0,0,0,0,0,0,0,72500,72500,72900,72000,72000,72000,72000,72000,72000,60000,60000,60000,60000,60000,10000,10000,10000,10000,10000,100},
-{30,1000000,0,0,0,0,0,0,0,0,0,0,0,57000,56900,56000,56000,56000,56000,56000,56000,80000,80000,80000,80000,80000,30000,30000,30000,30000,30000,100},
-{30,1000000,0,0,0,0,0,0,0,0,0,0,0,0,33000,33000,33000,33000,33000,33000,32000,70000,70000,70000,70000,70000,80000,80000,80000,80000,80000,20000},
-{30,1000000,0,0,0,0,0,0,0,0,0,0,0,0,0,40000,45000,45000,45000,45000,40000,16000,16000,16000,16000,16000,100000,100000,100000,100000,100000,160000},
-
-{30,1000000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1000000},
-	};	
-		
-	//Weights to detremine the dice	
-	int diceSelectionWeights[15][7] =	
-	{	
-{5,17,4,8,2,1,2},
-{5,18,4,8,2,1,3},
-{5,18,4,8,2,1,3},
-{5,19,4,9,2,1,3},
-{5,20,6,8,2,1,3},
-{5,18,6,8,1,1,2},
-{5,17,5,8,1,1,2},
-{5,16,5,7,1,1,2},
-{5,16,5,7,1,1,2},
-{5,16,5,7,1,1,2},
-{5,16,5,7,1,1,2},
-{5,16,5,7,1,1,2},
-{5,16,5,7,1,1,2},
-{5,15,4,7,1,1,2},
-{5,17,6,7,1,1,2},
-
-
-
-
-
-
-	};	
-
-	
-	int jackpotCollectionTiers[4] = {10,20,25,30};
-	int jackpotAmounts[4] = {20,100,1000,18000};
-//	int jackpotAmounts[4] = {20,20,20,20};
-	
-	
-	for (int i=0; i<numTrials; i++) {
-		//Print the status
-		if (i%(numTrials/100) ==0) printf("%f\n", (double)i/numTrials);
 
 		//Reset the collection each trial
-		numGems = 0;
-		numIdols = 0;
-		numRerolls = 0;
+		int numGems = 0;
+		int numIdols = 0;
+		int numRerolls = 0;
 		
 		//For each position
 		for (int reelPos=0; reelPos<15; reelPos++)
@@ -260,17 +167,23 @@ int main()
 
 			//Roll the dice
 			diceRollRNGResult =  weightedDice(diceWeights[diceSelectRNGResult]);
-			//printf("Roll %i", roll);
+			//printf("Roll %i ", diceRollRNGResult);
 			
 			
 				while (diceRollRNGResult == RESPINRESULT )
 				{
 					numRerolls++;
 					diceRollRNGResult =  weightedDice(diceWeights[diceSelectRNGResult]);
+					//printf(", %i ", diceRollRNGResult);
 				}
+			//printf("\n");
 
 				if (numRerolls>19) numRerolls = 19;
 			
+			//printf("The prize is %i\n", prizeTable[diceRollRNGResult]);
+			//printf("The prize actually is %i\n", prizeTable[diceRollRNGResult]*(numRerolls+1));
+
+
 			if (numRerolls >0) totalPrize+= prizeTable[diceRollRNGResult]*(numRerolls+1);
 			else totalPrize+= prizeTable[diceRollRNGResult];
 
@@ -283,7 +196,7 @@ int main()
 			}
 		}
 
-		stats[numIdols]++;
+		//stats[numIdols]++;
 		
 
 		numGems = weightedDice(gemAwardWeights[numIdols]) + 1;
@@ -295,14 +208,58 @@ int main()
 		else if (numGems >= jackpotCollectionTiers[1]) {jackpotPrize+=jackpotAmounts[1];}//stats[1]++;}
 		else if (numGems >= jackpotCollectionTiers[0]) {jackpotPrize+=jackpotAmounts[0];}//stats[0]++;}
 	
+		stats[0] += totalPrize;
+		stats[1] +=jackpotPrize;
+		stats[2]++;
+	
+}
+
+
+int main()
+{
+	clock_t tStart = clock();
+	 
+	const int numTrials = 10000000;
+
+	
+	
+	double stats[15] = {0};
+	
+
+	
+
+	int num_threads = 2;
+
+	std::thread th[num_threads];
+		 
+	
+	
+
+	for (int i=0; i<numTrials; i++) {
+
+	 if (i % (numTrials/100) == 0) printf("[%i]\n",i);
+
 		
-				
+			// for (int t=0; t<num_threads;t++)
+		// {
+         //Launch a thread
+			//th[t] = thread( diamondLinkFeature, stats);
+			diamondLinkFeature(stats);			
+		// }
+		 
+        //Join the threads with the main thread
+        //for (int t = 0; t < num_threads; ++t) {
+             //th[t].join();
+        // }
+		 
+
 	}
-	 printf("Prizes: %f\n", totalPrize/numTrials);
-	 printf("Jackpots: %f\n", jackpotPrize/numTrials);
+	 printf("Prizes: %f\n", stats[0]/numTrials);
+	 printf("Jackpots: %f\n", stats[1]/numTrials);
+	 printf("I got called %f times\n", stats[2]);
 	 
 	 
-	 for (int i=0; i<=15; i++) printf("%i : %f\n", i, (double)stats[i]/(double)numTrials);
+	// for (int i=0; i<=15; i++) printf("%i : %f\n", i, (double)stats[i]/(double)numTrials);
 
 	 	 time_t end = time(0); 
 		printf("Time taken: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
